@@ -84,36 +84,31 @@ Terraform remains the source of truth for the baseline configuration, while runt
 - Terraform (Infrastructure as Code)
 - Python
 
----
-
 ## Repository Structure
-.
-├── src/
-│ ├── fragile_service/ # Primary Lambda with failure injection
-│ │ └── app.py
-│ │
-│ └── healer/ # Remediation (self-healing) Lambda
-│ └── app.py
-│
-├── deploy/
-│ └── fragile/ # Terraform infrastructure
-│ ├── api_gateway.tf
-│ ├── alarms.tf
-│ ├── backend.tf
-│ ├── cloudwatch.tf
-│ ├── healer.tf
-│ ├── healer_iam.tf
-│ ├── healer_subscription.tf
-│ ├── healer_sns_permission.tf
-│ ├── iam.tf
-│ ├── lambda.tf
-│ ├── outputs.tf
-│ ├── sns.tf
-│ └── variables.tf
-│
-└── README.md
 
----
+- **src/**
+  - **fragile_service/** — Primary Lambda with failure injection  
+    - `app.py`
+  - **healer/** — Remediation (self-healing) Lambda  
+    - `app.py`
+
+- **deploy/**
+  - **fragile/** — Terraform infrastructure
+    - `api_gateway.tf`
+    - `alarms.tf`
+    - `backend.tf`
+    - `cloudwatch.tf`
+    - `healer.tf`
+    - `healer_iam.tf`
+    - `healer_subscription.tf`
+    - `healer_sns_permission.tf`
+    - `iam.tf`
+    - `lambda.tf`
+    - `outputs.tf`
+    - `sns.tf`
+    - `variables.tf`
+
+- **README.md**
 
 ## How to Observe Self-Healing
 
