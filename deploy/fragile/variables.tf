@@ -13,5 +13,5 @@ variable "project_name" {
 variable "failure_rate" {
   description = "Failure rate for chaos testing"
   type        = number
-  default     = 0
+  default     = 0.2
 }
