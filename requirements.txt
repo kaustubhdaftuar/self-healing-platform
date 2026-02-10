@@ -1,1 +1,2 @@
 # shared lambda dependencies (added later)
+boto3>=1.34.0
