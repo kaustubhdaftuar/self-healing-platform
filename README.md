@@ -87,27 +87,29 @@ Terraform remains the source of truth for the baseline configuration, while runt
 ---
 
 ## Repository Structure
-
 .
 ├── src/
-│   ├── fragile_service/      # Primary Lambda with failure injection
-│   └── healer/               # Remediation (self-healing) Lambda
+│ ├── fragile_service/ # Primary Lambda with failure injection
+│ │ └── app.py
+│ │
+│ └── healer/ # Remediation (self-healing) Lambda
+│ └── app.py
 │
 ├── deploy/
-│   └── fragile/              # Terraform infrastructure
-│       ├── lambda.tf
-│       ├── api_gateway.tf
-│       ├── alarms.tf
-│       ├── cloudwatch.tf
-│       ├── sns.tf
-│       ├── healer.tf
-│       ├── healer_iam.tf
-│       ├── healer_subscription.tf
-│       ├── healer_sns_permission.tf
-│       ├── iam.tf
-│       ├── backend.tf
-│       ├── variables.tf
-│       └── outputs.tf
+│ └── fragile/ # Terraform infrastructure
+│ ├── api_gateway.tf
+│ ├── alarms.tf
+│ ├── backend.tf
+│ ├── cloudwatch.tf
+│ ├── healer.tf
+│ ├── healer_iam.tf
+│ ├── healer_subscription.tf
+│ ├── healer_sns_permission.tf
+│ ├── iam.tf
+│ ├── lambda.tf
+│ ├── outputs.tf
+│ ├── sns.tf
+│ └── variables.tf
 │
 └── README.md
 
