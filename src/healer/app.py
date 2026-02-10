@@ -2,20 +2,28 @@ import json
 import boto3
 import os
 
-lambda_client = boto3.client("lambda")
 
-TARGET_FUNCTION_NAME = os.environ["TARGET_FUNCTION_NAME"]
+def get_lambda_client():
+    return boto3.client("lambda")
+
+
+def get_target_function_name():
+    return os.environ["TARGET_FUNCTION_NAME"]
+
 
 def lambda_handler(event, context):
+    lambda_client = get_lambda_client()
+    target_function_name = get_target_function_name()
+
     response = lambda_client.get_function_configuration(
-        FunctionName=TARGET_FUNCTION_NAME
+        FunctionName=target_function_name
     )
 
     env_vars = response.get("Environment", {}).get("Variables", {})
     env_vars["FAILURE_RATE"] = "0"
 
     lambda_client.update_function_configuration(
-        FunctionName=TARGET_FUNCTION_NAME,
+        FunctionName=target_function_name,
         Environment={"Variables": env_vars}
     )
 
@@ -23,6 +31,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "body": json.dumps({
             "message": "Remediation applied",
-            "target": TARGET_FUNCTION_NAME
+            "target": target_function_name
         })
     }
+
