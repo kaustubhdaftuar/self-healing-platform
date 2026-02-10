@@ -49,23 +49,24 @@ AWS Services Used:
 ---
 
 ## Repository Structure
-'''text
-.
-├── src/                    # Application source code
-├── deploy/
-│   └── fragile/            # Terraform IaC (self-healing / chaos environment)
-│       ├── main.tf
-│       ├── variables.tf
-│       ├── iam.tf
-│       ├── lambda.tf
-│       ├── api_gateway.tf
-│       ├── outputs.tf
-│       ├── app.py
-│       └── function.zip
-├── docs/
-└── README.md
 
-Note: Git does not track empty directories, so `deploy/` acts as a container for Terraform environments.
+    .
+    ├── src/                     # Application source code
+    │   ├── app.py
+    │   └── function.zip
+    ├── deploy/                  # Terraform environments container
+    │   └── fragile/             # Terraform IaC (self-healing / chaos environment)
+    │       ├── main.tf
+    │       ├── variables.tf
+    │       ├── iam.tf
+    │       ├── lambda.tf
+    │       ├── api_gateway.tf
+    │       └── outputs.tf
+    ├── docs/
+    └── README.md
+
+Note: Git does not track empty directories, so deploy/ acts as a container for Terraform environments.
+
 
 ---
 
