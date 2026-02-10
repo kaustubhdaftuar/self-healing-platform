@@ -1,4 +1,4 @@
-name: Self-Healing CI
+name: Self-Healing Platform CI
 
 on:
   push:
@@ -7,14 +7,18 @@ on:
 
 jobs:
   validate:
+    name: Validate Lambdas and Terraform
     runs-on: ubuntu-latest
 
     steps:
+      # -----------------
+      # Checkout
+      # -----------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # -----------------
-      # Python validation
+      # Python / Lambda validation
       # -----------------
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,16 +33,17 @@ jobs:
 
       - name: Validate Lambda code
         run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
           python -m compileall src/
           pytest tests/
 
       # -----------------
-      # Terraform validation
+      # Terraform validation (NO AWS)
       # -----------------
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform fmt check
+      - name: Terraform format check
         run: |
           cd deploy/fragile
           terraform fmt -check -recursive
