@@ -1,146 +1,139 @@
-# Self-Healing Serverless Platform (DevOps Project)
+# Self-Healing Serverless Platform on AWS
 
-A production-style serverless system built on AWS and hardened using DevOps and SRE best practices.  
-This project demonstrates how to design, break, observe, automate, and reproduce a system using Infrastructure as Code.
-
----
-
-## What This Project Is
-
-This project exposes a simple HTTP API backed by AWS Lambda.  
-The system intentionally supports failure and latency injection to validate monitoring, alerting, and recovery behavior.
-
-The system was:
-1. Built manually to understand AWS service interactions
-2. Migrated to Terraform to make the infrastructure reproducible
-3. Tested using controlled chaos (error and latency injection)
+A production-style, Terraform-managed serverless system that automatically detects failures and heals itself using AWS-native observability and remediation patterns.
 
 ---
 
-## Architecture
+## Overview
 
-Client → API Gateway (HTTP API) → Lambda (Python) → CloudWatch
+This project demonstrates a real-world self-healing serverless architecture on AWS.
 
-AWS Services Used:
-- AWS Lambda (Python 3.10)
-- API Gateway (HTTP API)
-- CloudWatch Logs and Metrics
-- IAM (least-privilege roles)
+The system intentionally injects failures into a Lambda function using a configurable failure rate. When error thresholds are breached, CloudWatch alarms detect the issue and automatically trigger remediation logic that stabilizes the system without human intervention.
+
+The architecture implements a complete:
+
+Detect → Decide → Act → Verify
+
+self-healing loop.
+
+---
+
+## Problem Statement
+
+In real production systems:
+- Failures are inevitable
+- Manual recovery increases MTTR
+- Blind automation can be dangerous
+
+This project demonstrates how to:
+- Detect failures reliably using metrics
+- Trigger controlled automation
+- Heal safely without infinite loops
+- Preserve Infrastructure as Code as the source of truth
+
+---
+
+## Architecture Flow
+
+1. API Gateway exposes an HTTP endpoint
+2. Requests invoke the primary Lambda function
+3. Failures are injected using a configurable FAILURE_RATE
+4. CloudWatch monitors Lambda error metrics
+5. When errors exceed a defined threshold:
+   - A CloudWatch Alarm enters ALARM state
+   - The alarm publishes an event to SNS
+   - A remediation (healer) Lambda is invoked automatically
+6. The healer Lambda corrects the failure condition at runtime
+7. Error rates drop and the alarm transitions back to OK
+
+---
+
+## Self-Healing Mechanism
+
+Self-healing is implemented using a dedicated remediation Lambda function:
+
+- CloudWatch alarms detect unhealthy behavior
+- SNS triggers the healer Lambda automatically
+- The healer performs a predefined remediation action
+- In this implementation, healing is achieved by dynamically setting:
+
+  FAILURE_RATE = 0
+
+- Error generation stops and the system stabilizes
+
+Terraform remains the source of truth for the baseline configuration, while runtime remediation stabilizes the system during incidents. On the next Terraform apply, the baseline configuration is restored unless intentionally changed.
+
+---
+
+## Design Principles
+
+- Infrastructure defined entirely using Terraform
+- Runtime remediation is safe, deterministic, and reversible
+- No manual console intervention required
+- No infinite remediation loops
+- Clear separation of detection, decision, and remediation responsibilities
+
+---
+
+## Technologies Used
+
+- AWS Lambda
+- Amazon API Gateway (HTTP API)
+- Amazon CloudWatch (metrics, logs, alarms)
+- Amazon SNS
 - Terraform (Infrastructure as Code)
-
----
-
-## Key DevOps Features
-
-- Infrastructure as Code  
-  Lambda, API Gateway, IAM roles, routes, and permissions are fully defined in Terraform.  
-  The entire system can be recreated with a single `terraform apply`.
-
-- Failure Injection  
-  Controlled via the `FAILURE_RATE` environment variable to simulate downstream failures and timeouts.
-
-- Observability-First Design  
-  Errors, error rate, and latency are treated as primary health signals and used to validate system behavior.
-
-- Reproducible and Auditable  
-  No manual AWS console dependency.  
-  All infrastructure changes are version-controlled in Git.
+- Python
 
 ---
 
 ## Repository Structure
 
-    .
-    ├── src/                     # Application source code
-    │   ├── app.py
-    │   └── function.zip
-    ├── deploy/                  # Terraform environments container
-    │   └── fragile/             # Terraform IaC (self-healing / chaos environment)
-    │       ├── main.tf
-    │       ├── variables.tf
-    │       ├── iam.tf
-    │       ├── lambda.tf
-    │       ├── api_gateway.tf
-    │       └── outputs.tf
-    ├── docs/
-    └── README.md
-
-Note: Git does not track empty directories, so deploy/ acts as a container for Terraform environments.
-
-
----
-
-## Infrastructure Setup (Terraform)
-
-Prerequisites:
-- AWS CLI configured locally
-- Terraform version 1.4 or higher
-
-Deploy infrastructure:
-cd deploy/fragile
-terraform init
-terraform plan
-terraform apply
-
-Retrieve API endpoint:
-terraform output -raw api_url
+.
+├── src/
+│   ├── fragile_service/      # Primary Lambda with failure injection
+│   └── healer/               # Remediation (self-healing) Lambda
+│
+├── deploy/
+│   └── fragile/              # Terraform infrastructure
+│       ├── lambda.tf
+│       ├── api_gateway.tf
+│       ├── alarms.tf
+│       ├── cloudwatch.tf
+│       ├── sns.tf
+│       ├── healer.tf
+│       ├── healer_iam.tf
+│       ├── healer_subscription.tf
+│       ├── healer_sns_permission.tf
+│       ├── iam.tf
+│       ├── backend.tf
+│       ├── variables.tf
+│       └── outputs.tf
+│
+└── README.md
 
 ---
 
-## Failure Injection and Testing
+## How to Observe Self-Healing
 
-The Lambda supports intentional failure injection using an environment variable:
+1. Deploy the infrastructure using Terraform
+2. Send traffic to the API Gateway endpoint
+3. Failures are injected based on FAILURE_RATE
+4. CloudWatch Alarm transitions to ALARM
+5. SNS triggers the healer Lambda automatically
+6. The healer corrects the failure condition
+7. Error metrics drop
+8. The alarm transitions back to OK
 
-FAILURE_RATE = 0   → Normal operation  
-FAILURE_RATE = 1   → 100% failure
-
-Test the API:
-curl <api_url>
-
-Expected behavior:
-- FAILURE_RATE = 0 → 200 OK
-- FAILURE_RATE = 1 → 500 Internal Server Error
-
-This was used to validate error metrics, error-rate behavior, alerting, and system recovery.
+No manual intervention is required once deployed.
 
 ---
 
-## DevOps and SRE Concepts Demonstrated
+## Key Takeaways
 
-- Infrastructure as Code (Terraform)
-- Configuration over code (12-factor principles)
-- Failure injection and chaos testing
-- Observability-driven operations
-- Least-privilege IAM
-- Reproducible environments
-- Proper Git hygiene (no Terraform state committed)
-
----
-
-## What This Project Demonstrates
-
-- Ability to design a serverless system
-- Ability to operate and monitor it
-- Ability to codify infrastructure
-- Ability to reason about failure and recovery
-
-This mirrors how real DevOps and SRE teams evolve production systems.
-
----
-
-## Future Enhancements
-
-- GitHub Actions CI/CD pipeline
-- Multiple environments (dev and prod)
-- Terraform-managed CloudWatch alarms and dashboards
-- Incident response runbooks
-- Automated chaos testing
-
----
-
-## Author
-
-Kaustubh Daftuar  
-DevOps / Cloud / SRE-focused project
+- Demonstrates real-world self-healing infrastructure patterns
+- Shows safe automation driven by observability
+- Preserves Infrastructure as Code integrity
+- Avoids uncontrolled or recursive remediation
+- Reflects production-grade DevOps and SRE practices
 
 
