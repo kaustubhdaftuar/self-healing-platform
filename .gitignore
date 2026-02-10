@@ -1,20 +1,77 @@
+####################################
 # Terraform
+####################################
 **/.terraform/
-**/*.tfstate
-**/*.tfstate.backup
-**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfstate.*
+.terraform.lock.hcl
+*.tfplan
 
-# Terraform plans
-**/*.tfplan
+####################################
+# Terraform local overrides
+####################################
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
 
+####################################
+# Build artifacts
+####################################
+*.zip
+dist/
+build/
+
+####################################
 # Python
+####################################
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
 
-# OS / editors
+####################################
+# Logs
+####################################
+*.log
+
+####################################
+# OS / Editor files
+####################################
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/
+
+####################################
+# Environment / Secrets
+####################################
+.env
+.env.*
+*.pem
+*.key
+
+####################################
+# Node (if added later)
+####################################
+node_modules/
+
+####################################
+# Test / coverage
+####################################
+.coverage
+htmlcov/
+pytest_cache/
+
+####################################
+# CI artifacts
+####################################
+*.out
+
 ~
 ~
 ~
