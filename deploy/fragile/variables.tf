@@ -16,8 +16,3 @@ variable "failure_rate" {
   default     = 0.3
 }
 
-variable "use_artifacts" {
-  description = "Whether to use prebuilt lambda artifacts (CD only)"
-  type        = bool
-  default     = false
-}
