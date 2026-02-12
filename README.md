@@ -18,14 +18,34 @@ self-healing loop.
 
 ---
 
+## Important Note on Docker
+
+This repository also contains Docker configuration files and a containerized deployment example.
+
+The Docker-based setup is separate from the Lambda-based self-healing architecture described in this document.
+
+- The self-healing serverless platform uses ZIP-based Lambda deployments.
+- Docker images are not used in the Lambda runtime.
+- The container configuration exists to demonstrate an alternative ECS-based deployment model.
+
+The two approaches represent different compute patterns:
+- Serverless (Lambda + API Gateway)
+- Container-based (Docker + ECS)
+
+The self-healing logic described in this README applies specifically to the serverless implementation.
+
+---
+
 ## Problem Statement
 
 In real production systems:
+
 - Failures are inevitable
 - Manual recovery increases MTTR
-- Blind automation can be dangerous
+- Blind automation can introduce instability
 
 This project demonstrates how to:
+
 - Detect failures reliably using metrics
 - Trigger controlled automation
 - Heal safely without infinite loops
@@ -50,18 +70,18 @@ This project demonstrates how to:
 
 ## Self-Healing Mechanism
 
-Self-healing is implemented using a dedicated remediation Lambda function:
+Self-healing is implemented using a dedicated remediation Lambda function.
 
 - CloudWatch alarms detect unhealthy behavior
 - SNS triggers the healer Lambda automatically
 - The healer performs a predefined remediation action
-- In this implementation, healing is achieved by dynamically setting:
+- Healing is achieved by dynamically setting:
 
   FAILURE_RATE = 0
 
 - Error generation stops and the system stabilizes
 
-Terraform remains the source of truth for the baseline configuration, while runtime remediation stabilizes the system during incidents. On the next Terraform apply, the baseline configuration is restored unless intentionally changed.
+Terraform remains the source of truth for baseline configuration. Runtime remediation stabilizes the system during incidents, while the next Terraform apply restores the defined configuration unless intentionally modified.
 
 ---
 
@@ -72,56 +92,108 @@ Terraform remains the source of truth for the baseline configuration, while runt
 - No manual console intervention required
 - No infinite remediation loops
 - Clear separation of detection, decision, and remediation responsibilities
+- Observability drives automation
 
 ---
 
 ## Technologies Used
 
-- AWS Lambda
+- AWS Lambda (ZIP-based deployment)
 - Amazon API Gateway (HTTP API)
 - Amazon CloudWatch (metrics, logs, alarms)
 - Amazon SNS
 - Terraform (Infrastructure as Code)
 - Python
+- Docker (separate containerized deployment demonstration)
+
+---
 
 ## Repository Structure
 
-- **src/**
-  - **fragile_service/** — Primary Lambda with failure injection  
-    - `app.py`
-  - **healer/** — Remediation (self-healing) Lambda  
-    - `app.py`
+- src/
+  - fragile_service/
+    - app.py
+  - healer/
+    - app.py
 
-- **deploy/**
-  - **fragile/** — Terraform infrastructure
-    - `api_gateway.tf`
-    - `alarms.tf`
-    - `backend.tf`
-    - `cloudwatch.tf`
-    - `healer.tf`
-    - `healer_iam.tf`
-    - `healer_subscription.tf`
-    - `healer_sns_permission.tf`
-    - `iam.tf`
-    - `lambda.tf`
-    - `outputs.tf`
-    - `sns.tf`
-    - `variables.tf`
+- deploy/
+  - fragile/
+    - api_gateway.tf
+    - alarms.tf
+    - backend.tf
+    - cloudwatch.tf
+    - healer.tf
+    - healer_iam.tf
+    - healer_subscription.tf
+    - healer_sns_permission.tf
+    - iam.tf
+    - lambda.tf
+    - outputs.tf
+    - sns.tf
+    - variables.tf
 
-- **README.md**
+- container-service/
+  - Dockerfile
+  - (ECS-based container deployment files)
+
+- README.md
+
+---
+
+## Deployment Instructions
+
+Prerequisites:
+
+- AWS CLI configured
+- Terraform installed
+- Appropriate IAM permissions for Lambda, API Gateway, SNS, and CloudWatch
+
+Steps:
+
+1. Navigate to the Terraform directory:
+
+   cd deploy/fragile
+
+2. Initialize Terraform:
+
+   terraform init
+
+3. Review the execution plan:
+
+   terraform plan
+
+4. Apply the infrastructure:
+
+   terraform apply
+
+5. After deployment, retrieve the API endpoint from Terraform outputs.
+
+---
 
 ## How to Observe Self-Healing
 
-1. Deploy the infrastructure using Terraform
-2. Send traffic to the API Gateway endpoint
-3. Failures are injected based on FAILURE_RATE
-4. CloudWatch Alarm transitions to ALARM
-5. SNS triggers the healer Lambda automatically
-6. The healer corrects the failure condition
-7. Error metrics drop
-8. The alarm transitions back to OK
+1. Send traffic to the API Gateway endpoint
+2. Failures are injected based on FAILURE_RATE
+3. CloudWatch Alarm transitions to ALARM
+4. SNS triggers the healer Lambda automatically
+5. The healer corrects the failure condition
+6. Error metrics drop
+7. The alarm transitions back to OK
 
 No manual intervention is required once deployed.
+
+---
+
+## Example Self-Healing Scenario
+
+- FAILURE_RATE is set to 0.3
+- Increased traffic causes elevated error rates
+- CloudWatch Alarm threshold is breached
+- Alarm publishes to SNS
+- Healer Lambda sets FAILURE_RATE = 0
+- Errors stop
+- System stabilizes
+- Alarm returns to OK
 
 ---
 
@@ -132,5 +204,7 @@ No manual intervention is required once deployed.
 - Preserves Infrastructure as Code integrity
 - Avoids uncontrolled or recursive remediation
 - Reflects production-grade DevOps and SRE practices
+- Demonstrates both serverless and container-based compute patterns
+
 
 
