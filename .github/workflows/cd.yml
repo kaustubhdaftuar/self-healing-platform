@@ -1,0 +1,38 @@
+name: Self-Healing Platform CD
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::240359166759:role/GitHubActionsOIDCRole
+          aws-region: eu-north-1
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+          cd deploy/fragile
+          terraform init
+
+      - name: Terraform Apply
+        run: |
+          cd deploy/fragile
+          terraform apply -auto-approve
