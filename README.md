@@ -1,12 +1,14 @@
 # Self-Healing Serverless Platform on AWS
 
-A production-style, Terraform-managed serverless system that automatically detects failures and heals itself using AWS-native observability and remediation patterns.
+A production-style, Terraform-managed serverless system that automatically detects failures and heals itself using AWS-native observability and automated remediation patterns.
+
+This repository demonstrates both serverless and container-based deployment models, with the primary focus on a self-healing Lambda architecture.
 
 ---
 
 ## Overview
 
-This project demonstrates a real-world self-healing serverless architecture on AWS.
+This project implements a real-world self-healing cloud architecture using AWS services and Infrastructure as Code.
 
 The system intentionally injects failures into a Lambda function using a configurable failure rate. When error thresholds are breached, CloudWatch alarms detect the issue and automatically trigger remediation logic that stabilizes the system without human intervention.
 
@@ -15,6 +17,71 @@ The architecture implements a complete:
 Detect → Decide → Act → Verify
 
 self-healing loop.
+
+Additionally, the project includes a fully automated CI/CD pipeline using GitHub Actions to validate and deploy infrastructure changes.
+
+---
+
+## Architecture (Serverless Self-Healing Flow)
+
+1. API Gateway exposes an HTTP endpoint
+2. Requests invoke the primary Lambda function
+3. Failures are injected using a configurable FAILURE_RATE
+4. CloudWatch monitors Lambda error metrics
+5. When errors exceed a defined threshold:
+   - A CloudWatch Alarm enters ALARM state
+   - The alarm publishes an event to SNS
+   - A remediation (healer) Lambda is invoked automatically
+6. The healer Lambda corrects the failure condition at runtime
+7. Error rates drop and the alarm transitions back to OK
+
+No manual intervention is required once deployed.
+
+---
+
+## Self-Healing Mechanism
+
+Self-healing is implemented using a dedicated remediation Lambda function.
+
+- CloudWatch alarms detect unhealthy behavior
+- SNS triggers the healer Lambda automatically
+- The healer performs a predefined remediation action
+- Healing is achieved by dynamically setting:
+
+  FAILURE_RATE = 0
+
+- Error generation stops and the system stabilizes
+
+Terraform remains the source of truth for baseline configuration. Runtime remediation stabilizes the system during incidents, while the next Terraform apply restores the defined configuration unless intentionally modified.
+
+---
+
+## CI/CD Pipeline (GitHub Actions)
+
+This project includes a fully automated CI and CD workflow.
+
+### Continuous Integration (CI)
+
+Triggered on pull requests and pushes:
+
+- Set up Python
+- Install dependencies
+- Validate Lambda code
+- Terraform format check
+- Terraform validate
+
+This ensures infrastructure and application correctness before deployment.
+
+### Continuous Deployment (CD)
+
+Triggered on push to main:
+
+- Configure AWS credentials securely
+- Terraform init
+- Terraform apply
+- Automatically update infrastructure and Lambda configuration
+
+This ensures infrastructure changes are deployed consistently and reproducibly.
 
 ---
 
@@ -36,63 +103,15 @@ The self-healing logic described in this README applies specifically to the serv
 
 ---
 
-## Problem Statement
-
-In real production systems:
-
-- Failures are inevitable
-- Manual recovery increases MTTR
-- Blind automation can introduce instability
-
-This project demonstrates how to:
-
-- Detect failures reliably using metrics
-- Trigger controlled automation
-- Heal safely without infinite loops
-- Preserve Infrastructure as Code as the source of truth
-
----
-
-## Architecture Flow
-
-1. API Gateway exposes an HTTP endpoint
-2. Requests invoke the primary Lambda function
-3. Failures are injected using a configurable FAILURE_RATE
-4. CloudWatch monitors Lambda error metrics
-5. When errors exceed a defined threshold:
-   - A CloudWatch Alarm enters ALARM state
-   - The alarm publishes an event to SNS
-   - A remediation (healer) Lambda is invoked automatically
-6. The healer Lambda corrects the failure condition at runtime
-7. Error rates drop and the alarm transitions back to OK
-
----
-
-## Self-Healing Mechanism
-
-Self-healing is implemented using a dedicated remediation Lambda function.
-
-- CloudWatch alarms detect unhealthy behavior
-- SNS triggers the healer Lambda automatically
-- The healer performs a predefined remediation action
-- Healing is achieved by dynamically setting:
-
-  FAILURE_RATE = 0
-
-- Error generation stops and the system stabilizes
-
-Terraform remains the source of truth for baseline configuration. Runtime remediation stabilizes the system during incidents, while the next Terraform apply restores the defined configuration unless intentionally modified.
-
----
-
 ## Design Principles
 
 - Infrastructure defined entirely using Terraform
 - Runtime remediation is safe, deterministic, and reversible
+- Observability-driven automation
 - No manual console intervention required
 - No infinite remediation loops
 - Clear separation of detection, decision, and remediation responsibilities
-- Observability drives automation
+- Automated CI/CD for infrastructure consistency
 
 ---
 
@@ -103,6 +122,7 @@ Terraform remains the source of truth for baseline configuration. Runtime remedi
 - Amazon CloudWatch (metrics, logs, alarms)
 - Amazon SNS
 - Terraform (Infrastructure as Code)
+- GitHub Actions (CI/CD)
 - Python
 - Docker (separate containerized deployment demonstration)
 
@@ -132,41 +152,20 @@ Terraform remains the source of truth for baseline configuration. Runtime remedi
     - sns.tf
     - variables.tf
 
+- .github/workflows/
+  - ci.yml
+  - cd.yml
+
 - container-service/
   - Dockerfile
-  - (ECS-based container deployment files)
+  - ECS-based container deployment example
+
+- docs/
+  - architecture.md
+  - decisions.md
+  - failure-mode-1.md
 
 - README.md
-
----
-
-## Deployment Instructions
-
-Prerequisites:
-
-- AWS CLI configured
-- Terraform installed
-- Appropriate IAM permissions for Lambda, API Gateway, SNS, and CloudWatch
-
-Steps:
-
-1. Navigate to the Terraform directory:
-
-   cd deploy/fragile
-
-2. Initialize Terraform:
-
-   terraform init
-
-3. Review the execution plan:
-
-   terraform plan
-
-4. Apply the infrastructure:
-
-   terraform apply
-
-5. After deployment, retrieve the API endpoint from Terraform outputs.
 
 ---
 
@@ -180,11 +179,9 @@ Steps:
 6. Error metrics drop
 7. The alarm transitions back to OK
 
-No manual intervention is required once deployed.
-
 ---
 
-## Example Self-Healing Scenario
+## Example Failure Scenario
 
 - FAILURE_RATE is set to 0.3
 - Increased traffic causes elevated error rates
@@ -202,9 +199,10 @@ No manual intervention is required once deployed.
 - Demonstrates real-world self-healing infrastructure patterns
 - Shows safe automation driven by observability
 - Preserves Infrastructure as Code integrity
+- Implements CI/CD for automated validation and deployment
 - Avoids uncontrolled or recursive remediation
+- Demonstrates both serverless and container-based compute models
 - Reflects production-grade DevOps and SRE practices
-- Demonstrates both serverless and container-based compute patterns
 
 
 
